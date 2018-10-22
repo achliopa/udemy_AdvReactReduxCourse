@@ -43,4 +43,43 @@ watchman shutdown-server
 
 ### Lecture 6 - App Overview
 
+* we start with a simple project. a comment form.
+* it has a text box to write comment and a button to submit. underneath in page alist of saved comments
+
+### Lecture 7 - Installing Dependencies
+
+* `npm install --save redux react-redux`
+
+### Lecture 8 - React and Redux Design
+
+* we will have 3 components in app: App component [CommentBox component, CommentList component]
+* CommentBox will have the form
+* on reuux side state will contain acomments array of strings and an actioncreator called saveComments adding a commnet to the list via the comments reducer
+
+### Lecture 9 - What do we test?
+
+* look at each individual part of the application
+* imagine telling a friend'here's what this piece of code does'
+* write a test to verify each part does what you expect (functional testing)
+	* test 1: test CommentBox creates a textbox and a button
+	* test 2: when we click on button contents of txtbox clear out
+
+### Lecture 10 - Starting from Scratch
+
+* we do a basic Appcomponet. boilerplate CoomnetBox and CommentList components. verify they appear in App
+* we delete all contents of /src folder
+* we add a root file index.js . react always assumes we have an index.js as root
+* we add a components folder and an App.js (top level react component) and the 2 subcomponents
+
+### Lecture 11 - Rendering the App
+
+* in App we add boilerplate code and import it in index.js.
+* in index.js we import react and reactDOM and render App (top level component) as `ReactDOM.render(<App />, document.querySelector('#root'));`
+
+### Lecture 12 - Showing Components in the App
+
+* we add boilerplate code in the 2 subcomponents and import them in App adding them to the jsx
+
+### Lecture 13 - Valid Test File names
+
 * 
