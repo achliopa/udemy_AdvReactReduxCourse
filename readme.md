@@ -82,4 +82,92 @@ watchman shutdown-server
 
 ### Lecture 13 - Valid Test File names
 
+* jest looks in .spec.js and .test.js files
+* in a folder called /__tests__ it includes all files
+* we make a /__tests__ folder and add App.test.js adding imports (react, react-dom., App)
+
+### Lecture 14 - Test Structure
+
+* `it('<description>',()=>{<function with test logic>});`
+
+### Lecture 15 - Tricking React with JSDOM
+
+* when we run `npm run test` it starts Jest in CLI
+* React expects to run in  browser not in CLI
+* crete-react-app creates adependency in the project called JSDOM
+* JSDOM is a js implementation (simulation) of how browser works
+* when we write `const div = document.createElement('div');` we create a div in JSDOM (fake div)
+* JSDOM allows us to use document (bbrowser parent cobject) to create a fake div and use it to anchor (render) App `ReactDOM.render(<App />, div);`
+* then we test. we look in div and see in CommonBox exists
+* before we exit test we cleanup. we remove App from div (to improve performance, and save memory) `ReactDOM.unmountComponentAtNode(div);`
+
+### Lecture 16 - Verifying Component Existence
+
+* we cl the html in div `console.log(div.innerHTML);`
+* the actual asserion is `expect(div.innerHTML).toContain('Comment Box');`
+
+### Lecture 17 - Test Expectations
+
+* our assertion (expectation) is broken down as:
+	* expect: global function
+	* (<value that we are inpecting>): the thing we want to verify
+	* .<matcher statement> : designates how we want to inspect the 'subject'	
+	* (<value that we expect to see>): expected balue, what we want our subject to be
+
+### Lecture 18 - Limiting Test Knowledge
+
+* we are testing the App component but in our test we are asserting code in the ContentBox component
+* we waat test files named for a component and testing that component
+* we can test the EXISTENCE on subcomponents in a component under test not their internals
+
+### Lecture 19 - Enzyme Setup
+
+* we would like to test that App has an instance of CommentBox
+* we ll use enzyme library `npm install --save enzyme enzyme-adapter-react-<react major version>`
+* we need to confire enzyme. in /src we add a file 'setupTests.js'. in it we bind adapter to enzyme
+```
+import Enzyme from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+Enzyme.configure({ adapter: new Adapter() });
+```
+* ewverytime enzyme starts it looks for /src/setupTests.js for config. runs it before tests
+
+### Lecture 20 - Enzyme Renderers
+
+* with enzyme we dont have to manually render our component in a test div
+* Enzyme API gives us 3 capabilities on running our tests (render)
+	* Static: render the given component and return plain HTML. we cannot interact
+	* Shallow: render "just" the given component and none of its children. faster test
+	* Full DOM: render the component and all of its children + let us modify itr afterwards (interact)
+* [enzyme docs](https://airbnb.io/enzyme)
+* we use shallow rendering in our first test to test existens of child component (without importing it)
+
+### Lecture 21 - Expectations for Component Instances
+
+* we refactor App.test.js (we remove ReactDOm) and  `import { shallow } from 'enzyme'; `
+* shallow ommits rendering only React child components
+* our test becomes
+```
+	const wrapped = shallow(<App />);
+	expect(wrapped.find(CommenBox).length).toEqual(1);
+```
+* try tdd, break the test after passing, then fix again
+we do the same for comments list 
+
+### Lecture 24 - Absolute Path imports
+
+* we up to now we use relative path imports
+* we ll makje them use absolute imports
+* in our root path we add a file called .env in there we add `NODE_PATH=src/`
+* we restart server and test runner
+* in App.test.js we refactor path imports e.g `import CommentList from 'components/CommentList';` so all imports are absolute in respect to the NODE_PATH
+
+### Lecture 25 - Code Reuse with beforeEach
+
+* we add beforeEach extracting common test code there (it runs first)
+* varieables shold not be declared in beforeEach (scoping issues) but as globals with 'let' (to reassigne it multiple times with beforeEach). beforeEach runs multiple times
+
+### Lecture 26 - CommentBox component
+
+* commentbox has a text area and a button
 * 
