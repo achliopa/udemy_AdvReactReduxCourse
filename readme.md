@@ -161,7 +161,7 @@ we do the same for comments list
 * in our root path we add a file called .env in there we add `NODE_PATH=src/`
 * we restart server and test runner
 * in App.test.js we refactor path imports e.g `import CommentList from 'components/CommentList';` so all imports are absolute in respect to the NODE_PATH
-
+* seems it has problems with Create TReact App script. going back to relative paths
 ### Lecture 25 - Code Reuse with beforeEach
 
 * we add beforeEach extracting common test code there (it runs first)
