@@ -162,6 +162,7 @@ we do the same for comments list
 * we restart server and test runner
 * in App.test.js we refactor path imports e.g `import CommentList from 'components/CommentList';` so all imports are absolute in respect to the NODE_PATH
 * seems it has problems with Create TReact App script. going back to relative paths
+
 ### Lecture 25 - Code Reuse with beforeEach
 
 * we add beforeEach extracting common test code there (it runs first)
@@ -170,4 +171,64 @@ we do the same for comments list
 ### Lecture 26 - CommentBox component
 
 * commentbox has a text area and a button
+* we make commentbox a class based component and add a simple form
+
+### Lecture 27 - TextArea Implementation
+
+* we add state (ES6 style)
+* we add arrow function handlers for textare adn form (to avoid binding this at constructor)
+* we dont add redux we just celar form at submit
+
+### Lecture 28 - CommentBox Test File
+
+* commentbox has no children components
+* we use  FullDOM render from enzyme for testing
+* we add a new test file
+* we want to test that commentbox shows text are and button
+
+### Lecture 29 - Asserting Element Existence
+
+* fullDOM rendering mounts the component under test to the DOM. tests can affect each other if they use same dom
+* we should .unmount() after test
+* to use fullDOM rendering we import mount `import { mount } from 'enzyme';`
+* the dom is provided by jsdom
+* we use find to assert existence of components or html (using css selector)
+* our test is
+```
+	const wrapped = mount(<CommentBox />);
+	expect(wrapped.find('textarea').length).toEqual(1);
+	expect(wrapped.find('button').length).toEqual(1);
+```
+* we dont do cleanup in our test yet
+
+### Lecture 30 - AfterEach Statements
+
+* we move declaration in beforeEach (we pass it in as a callback arrow function)
+* we add afterEach(called after each test) to unmount the mounted component
+```
+afterEach(()=>{
+	wrapped.unmount();
+});
+```
+
+### Lecture 31 - Simulating Change Events
+
+* we want to test that state property is wired up correctly in the component
+* any time we change the textarea the onChange property gets fired up (callback gets called)
+* our test flow is: find the textarea element => simulate a 'change' event => provide a fake event object => force the component to update => assert the textarea value has changed
+
+### Lecture 32 - Providing Fake Events
+
+* we use .find() to grab textarea
+* we use enzyme .simulate('<eventname>',{ event mock object}) to simulate an event
+* event name is the pro name without the on
+* to simulate the event object we pass in the properties like in the event handler
+```
+.simulate('change', {
+		target: { value: 'new comment'}
+	})
+```
+
+### Lecture 33 - Forcing Component Updates
+
 * 
