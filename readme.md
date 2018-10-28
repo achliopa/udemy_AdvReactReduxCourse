@@ -231,4 +231,202 @@ afterEach(()=>{
 
 ### Lecture 33 - Forcing Component Updates
 
+* the event handler calls setState() and forces the component to rerender but asynchronously. not instantly. it queues the render request to react
+* we want our component o renrender synchronously when we test as our assertion is immediatly after
+* enzyme offers update)( method to enable forcing rerender)
+
+### Lecture 34 - Retrieving Prop Values
+
+* we want to test that the text area receives the correct 'value' prop
+* we ll use enzyme '.prop(key)' method in our test
+* our test code in full is
+```
+	wrapped.find('textarea').simulate('change', {
+		target: { value: 'new comment'}
+	});
+	wrapped.update();
+	expect(wrapped.find('textarea').prop('value')).toEqual('new comment');
+```
+
+### Lecture 35 - Form Submit Exercise
+
+* our next test tests submit. when input is submitted, text area should be emptied
+* we simulate events
+* solution
+```
+it('empties textare when submitting input', () => {
+	wrapped.find('textarea').simulate('change', {
+		target: { value: 'new comment'}
+	});
+	wrapped.update();
+	wrapped.find('form').simulate('submit');
+	wrapped.update();
+	expect(wrapped.find('textarea').prop('value')).toEqual('');
+});
+```
+
+### Lecture 37  - Describe Statements
+
+* describe() groups tests and reuse code without affecting other tests
+* we put last 2 textarea tests in and add a beforeEach for the common setup code
+
+### Lecture 38 - Redux Setup
+
+* comment list has to  do on accessing the list of comments from redux state
+* we add a folder for reducers called /reducers and add 2 files index.js for the app reducer and comments.js for the comments list piece of state reducer
+* comments piece of state will have an action creator saveComment to save the comment on form submit at commentBox and a state.comments piece for rendering the list in commentList by  binding state to props
+* our boilerplate reducer is 
+```
+export default function(state = [], action) {
+	switch(action.type)  {
+		default: 
+			return state;
+	}
+}
+```
+* by state we meant the piece of state the reducer is responsible for
+* our app reducer in index.js is 
+```
+import { combineReducers} from 'redux';
+import commentsReducer from './comments';
+
+export default combineReducers)({
+	comments: commentsReducer
+});
+```
+
+### Lecture 39 - The Provider Tag
+
+* to use state in our app we need to wire the reducers and state in redux store. 
+* this is done in our apps root file (index.js)
+* we import Provider helper createStore method and combineReducer we just made
+```
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
+import reducers from './reducers';
+```
+* when we import a dir in es6 looks for the index.js in it and imports whatever is inside
+* Provider tag wraps our app jsx. it contains redux store and through it redux state is available throughout our app to COmponents (containers) that use the connect() wrapper to bind to the redux store made available by Provider
+* all we have to do to use it is wrap App tag with Provider passing in store prop createStore where we pass our combined reducer method and the initial state(if any)
+```
+ReactDOM.render(
+	<Provider store={createStore(reducers, {})}>
+		<App />
+	</Provider>
+	, document.querySelector('#root')
+);
+```
+
+### Lecture 40 - The SaveComment Action Creator
+
+* this action creator will add the coment form textarea to the commnets list in state
+* we add a folder /actions and a  file in it index.js to host our creators and types.js for our action type definition a.g `export const SAVE_COMMENT = 'save_comment';`
+* nothing new here in reducers we handle this type adding the comment to  the list with list interpolation
+```
+		case SAVE_COMMENT:
+			return [ ...state, action.payload];
+```
+
+### Lecture 41 - Bonding React with Redux
+
+* we use mapDistpatchToProps or dirreclty passing the action creator to connect in CommentBox
+* our action call in teh submit handler becomes `this.props.saveComment(this.state.comment);`
+* our connect becomes `export default connect(null,actions)(CommentBox);`
+* our tests are failing with redux added
+
+### Lecture 42 - Redux Test Errors
+
+* jest complains on not finding redux store. 
+* when we assemble a redux app, we wrap our App component with Provider which contains an instance of redux store
+* when we wrap a component with connect() it expects to see a parent component wrapped with Provider tag
+* in our test evironment redux specific components are missing. as we import and render react components in isolation
+* one solution is to import all redux related main components in test file
+* this brakes DRy as we have to repeat a lot of code
+* a better way is to refactor index.js. out the PRedux setup code in a helper method and import it in our tests
+
+### Lecture 43 - Adding a Root Component
+
+* we put the reusable code in a new file code Root.js
+* in there we make the Root reusable component as functional component
+```
+export default (props) => {
+	return (
+		<Provider store={createStore(reducers, {})}>
+			{props.children}
+		</Provider>
+	);
+};
+```
+* {props.children} is a react syntax. it allows to use this component to wrap other components indipendent of their internals
+* we import it in index.js and use it to wrap App
+* we use Root to wrap our components under test
+```
+	wrapped = mount(
+		<Root>
+			<CommentBox/>
+		</Root>
+	);
+```
+
+### Lecture 44 - Testing Reducers
+
+* we want to test that save comment action saves a comment. 
+* also that if we give a wrong type we dont get an error
+* in reducers folder we add a folder __tests__ and a comments.test.js file
+* tests are simple. we just assert the return of the reducer function
+* our test
+```
+	const action = {
+		type: SAVE_COMMENT,
+		payload: 'Test Comment'
+	};
+	const newState = commentsReducer([],action);
+	console.log(newState);
+	expect(newState).toEqual(['Test Comment']);
+```
+
+### Lecture 45 - Handling Unknown Types
+
+```
+it('handles action with unknown type', ()=> {
+	const newState = commentsReducer([],{});
+	expect(newState).toEqual([]);
+});
+```
+
+### Lecture 46 - Testing Action Creators
+
+* we follow the same drill like reducer. add a __tests__ folder and a test file
+```
+	it('has the correct payload',()=> {
+		const comment = 'test comment'
+		const action= saveComment(comment);
+		expect(action.payload).toEqual(comment);
+	});
+```
+
+### Lecture 47 - Comment List Wireup
+
+* we make CommentList a class component and connect it to state with mappStateToProps
+* we use a render helper to render our list using map()
+```
+	renderComments() {
+		return this.props.comments.map(comment => {
+			return (
+				<li key={comment}>{comment}</li>
+			);
+		});
+	}
+```
+* we bind redux state eto props
+```
+function mapStateToProps({comments}) {
+	return { comments };
+}
+
+export default connect(mapStateToProps)(CommentList);
+```
+
+### Lecture 48 - Getting Data into Redux
+
 * 
