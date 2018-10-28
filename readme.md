@@ -429,4 +429,211 @@ export default connect(mapStateToProps)(CommentList);
 
 ### Lecture 48 - Getting Data into Redux
 
+* we are ready to test the component
+* we add a testfile CommentList.test.js adding boilerplate same like CommentBox testfile
+* we want to test that the component shows an li element per comment
+* text from each comment is visible
+* commentlist uses redux state to render the list. we dont have it in our testfile
+* we have redux store but we cannot modify it in test. we have to dispatch an action
+* passing comments in props is not a solution as mapstatetoprops will overwrite it with empty string
+
+### Lecture 49 - Redux Initial State
+
+* in Roots we pass Provider which accepts initial state which we set as eppty object
+* we pass the initial state as a prop to roots to use it in testing
+```
+		<Root initialState={initialState}>
+			<CommentList/>
+		</Root>
+```
+
+### Lecture 50 - Cheerio Queries
+
+* our first test
+```
+it('creates one LI per comment', () => {
+	expect(wrapped.find('li').length).toEqual(2);
+});
+```
+* our second test needs to access the actual rendered text in the li
+* with enzyme we can use the .text() method in wrapped eleemnt but enzyme does not recommend it. it recommends using render() method
+* render() uses CheerioWrapper (!?!!?!!). [cheerio](https://github.com/cheeriojs/cheerio) is a library like jQuery
+* if we test for text(not html)
+```
+expect(wrapped.render().text()).toContain('Comment 1');
+expect(wrapped.render().text()).toContain('Comment 2');
+```
+
+### Lecture 51 - One more feature
+
+* we are not testing http requests. we should do it
+* we add a button 'Fetch Comments' to hit a remote API that will populate our list
+* we will hit a [json placeholder api](https://jsonplaceholder.typicode.com/)
+* this API returns JSON
+* we install axios lib and redux-promise middleware and moxios module`npm install --save axios redux-promise moxios`
+
+### Lecture 52 - Fetching a Remote Resource
+
+* redux middlewares are hooked up in redux store config
+* we import it `import reduxPropmise from 'redux-promise';` in Root. we import applyMiddleware from redux
+* we add it as a 3rd param to store `const store = createStore(reducers, initialState, applyMiddleware(reduxPromise));`
+* we add a new action type FETCH_COMMENTS
+* we add a fetchComments action creator using axios
+```
+export function fetchComments() {
+	const response = axios.get('http://jsonplaceholder.typicode.com/comments');
+
+	return {
+		type: FETCH_COMMENTS,
+		payload: response
+	}
+}
+```
+
+### Lecture 53 - Parsing Comments List
+
+* parsing comments out of response into  alist will be done in reducer
+* we first add a button and wire it ot he creator
+* we add the second button out of the form to avoid triggering subbmit
+* our parsing in reducer using map is
+```
+		case FETCH_COMMENTS:
+			const comments = action.payload.data.map(comment=>comment.name);
+			return [...state, ...comments];
+```
+
+### Lecture 54 - Integration Tests
+
+* we need to test our new functionality
+* we can add tests in our already existing testfiles
+* we ll try integration testing approach. test complete functionality e.g 'does dlicking Fetch COments shows a list of LIs?' testing many parts together
+
+### Lecture 55 - Integration Tests in Action
+
+* well add a __tests__ folder in src to add our integration tests
+* we add a file integrations.test.js
+* we add our usual imports for testing
+* our test will
+	* attempt to render the entire app
+	*  find the 'fetchComments' button and click it
+	* expect to find a list of comments
+
+### Lecture 56 - Fixin a broken test
+
+* commentbox test fails. we fix it
+* integration test doesnot check state so we do not care to initialize it at Root
+
+### Lecture 57 - Simulating Button Clicks
+
+* we want to find the button and simulate a click event
+* we add to it a class nae to be able to select it `wrapped.find('.fetch-comments').simulate('click');`
+* we try to test the list rendered `expect(wrapped.find('li').length).toEqual(500);` gives errors
+
+### Lecture 58 - Why failure?
+
+* in our test:
+	* we simulate click event on the button element
+	* action creator gets called
+	* request issued
+	* request fails
+* when we run jest in command line environment our app is executed in a different env using JSDOM. axios requests fail inside JSDOM
+* our response is undefined and cannot map on it
+* we need to use moxios (mock out axios api) 
+* axios talks to moxios mocking the apis o that axios does not fail
+
+### Lecture 59 - Faking Requests with Moxios
+
+* we add a beforeEach and an after Each to use moxios
+```
+beforeEach(()=>{
+	moxios.install();
+	moxios.stubRequest('https://jsonplaceholder.typicode.com/comments', {
+		status: 200,
+		response: [{ name: 'Fetched #1'},{ name: 'Fetched #2'}]
+	});
+});
+
+afterEach(()=>{
+	moxios.uninstall();
+});
+```
+* we install and uninstall it and use it to stub the axios req to a certain url mocking the repsonse and gicing a status: 200 (ALL OK)
+
+### Lecture 60 - The reason for failure
+
+* is that axios req is async and our assetion in sync
+* we add delay
+
+### lecture 61 - Introducing a Pause
+
+* we use setTimeout
+```
+	// introduce a pause
+	setTimeout(()=>{
+		//expect to find a list of comments
+		expect(wrapped.find('li').length).toEqual(2);
+	},100);
+```
+* we need to tell jest to wait a bit for the settimeout to end before ending the test
+* we use a callback called done passed in the test as argument and call it when we are done
+```
+	setTimeout(()=>{
+		wrapped.update();
+		//expect to find a list of comments
+		expect(wrapped.find('li').length).toEqual(2);
+		done();
+		wrapped.unmount();
+	},100);
+```
+
+### Lecture 62 - Moxios wait function
+
+* moxios hasa .wait() method. we refactor to use it. it works like setTIemout without the time in ms
+```
+	moxios.wait(()=>{
+		wrapped.update();
+		//expect to find a list of comments
+		expect(wrapped.find('li').length).toEqual(2);
+		done();
+		wrapped.unmount();
+	});
+```
+
+## Section 3 - Higher Order Components
+
+### Lecture 64 - An Introduction to Higher Order Components (HOC)
+
+* HOCs are normal React Components made to help us reuse code
+* Component + HOC = Component (enhanced or COmposed)
+* Enhanced components have additional functionality or data
+
+### Lecture 65 - Connect a Higher Order Component
+
+* connect function from react-redux is a HOC
+* we use it to share code from react-redux lib with our react components adding a way to bind to the redux side of our app
+
+### Lecture 66 - App Overview
+
+* we ll split our existing app into 2 pages and use react-router lib to navigate between them
+* CommentList will apear in / root route
+* CommentBox will apear in /post route
+* we will add authentication in our app. a simple one without backend support
+* if we are not logged in we wont be able to view COmmentBox and be redirected to /
+* we will implement a requireAuth HOC that will verify auth status. and reirectif necessary, we will add this HOC to  CommentBox
+* we can easily add the HOC to other furture components/pages in our app. (reuse)
+
+### Lecture 67 - Adding React Router
+
+* we `npm install --save react-router-dom`
+* we import Route and BrowserRouter from react-router-dom and use them to wrap our App component in index.js
+```
+	<Root>
+		<BrowserRouter>
+			<Route path='/' component={App} />
+		</BrowserRouter>
+	</Root>
+```
+
+### Lecture 68 - Adding Routes
+
 * 

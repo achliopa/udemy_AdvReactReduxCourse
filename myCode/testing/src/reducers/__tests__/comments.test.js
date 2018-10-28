@@ -7,7 +7,6 @@ it('handles actions of type SAVE_COMMENT', () => {
 		payload: 'Test Comment'
 	};
 	const newState = commentsReducer([],action);
-	console.log(newState);
 	expect(newState).toEqual(['Test Comment']);
 });
 
