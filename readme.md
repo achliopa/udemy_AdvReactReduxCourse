@@ -636,4 +636,294 @@ afterEach(()=>{
 
 ### Lecture 68 - Adding Routes
 
+* we ll define routes inside of App component replacing tags with Routes.
+* we dont break convention as BrowserRoute tag still wraps tags
+* specific paths first. but still it renders no mater the path. we use exact prop in root path tag
+
+### Lecture 69 - Auth Reducer
+
+* we can freely navigate between routes
+* we ll treat authentication simply. just a boolean in redux state
+* we add a new reducer to handle auth boolean in state in auth.js
+* we make a new type and action creator
+```
+export function changeAuth(isLoggedIn){
+	return {
+		type: CHANGE_AUTH,
+		payload: isLoggedIn
+	};
+}
+```
+* reducer just parser. the login flag is set on actioncreator call
+
+### Lecture 70 - Rendering a Header
+
+* we ll connect our reducer into combine reducer
+* we add a button in App to call the action 
+* we make it a class component
+* we add a renderheader() hlper method to render the header
+* for rendering the button we add another helper
+
+### Lecture 71 - Wiring Up state
+
+* we need to know the auth state var to change the text on the button and call the actioncreator witht the correct param
+* we need to map state to props
+
+### Lecture 72 - Changing Auth State
+
+* we call action creator from button `return (<button onClick={this.props.changeAuth(false)}>Sign Out</button>);`
+
+### Lecture 73 - Steps for Building a HOC
+
+* the steps to build a HOC
+	* write the logic you want to resuse into  component
+	* create a HOC file and add the HOC scaffold (boilerplate code)
+	* move the reusable logic into the HOC
+	* pass props/config/behaviour through to child component
+* we add the logic in ComponentBox component
+* to check if he is logged in we need access to auth redux piece of state. we use mapstatetoprops
+```
+function mapStateToProps(state) {
+	return {
+		auth: state.auth
+	};
+}
+```
+* we add lifecycle methods to check for auth when rendering or renrendering. (componentDidMount, componentDidUpdate)
+* we call a simple check helper
+```
+	shouldNavigateAway() {
+		if(!this.props.auth) {
+			console.log('PLEASE LEAVE')
+		}
+	}
+```
+
+### Lecture 74 - Forced Navigation with React Router
+
+* instead of just cling a message we want to navigate our user away from the page when not logged in
+* we use react-router lib and history object to do prog navigation `this.props.history.push('/')`
+* we got our resusable rlogic ready
+
+### Lecture 75 - Creating the HOC
+
+* in /components folder we add a nerw file requireAuth.js to host our HOC
+* when we start our filenames with lowercase it means they export a function. when we start with capital we export a class
+* our HOC scaffold is
+```
+import React, { Component } from 'react';
+
+export default (ChildComponent) => {
+	class ComposedComponent extends Component {
+		render() {
+			return <ChildComponent />;
+		}
+	}
+
+	return ComposedComponent;
+};
+```
+* to use the HOC
+	* we import the HOC file in a component file
+	* we wrap the component with HOC on export `export default requireAuth(CommentBox);`
+* from HOC source file we export a function. to use it we call the function with the component class as a param (child component)
+* in a barebone boilerplate HOC we hust render the componet and return it
+* when we import the wrapped component in a other react component what we get is the enahanced component
+
+### Lecture 76 - Placing Reusable Logic
+
+* we go to step 3 move logic in HOC scaffold
+* we copy lifecycle methods helper and map method. we return the container wrapping it with connect
+* in essence we have 2 levels of HOC (our and connect)
+
+### Lecture 77 - Passing Through Props
+
+* connect HOC makes use of props. mapStateToProps, mapDispatchToProps
+* we can use this approach in any HOC. pass params as arguments and pass them as props to the child component
+* a child prop can inherit props from its environment. e.g Route
+* there is a hierarchy in props injected down to CommentBox: App => Route (history) => connect(actions) => requireAuth => CommentBox
+* injected props higher in hioerarchy than our HOC appear in our HOC class
+* it is our responsibility in HOC to pass them down to the childcompement
+* the way to pass them down is in return statement `return <ChildComponent {...this.props} />;`
+
+## Section 4 - Middlewares with Redux
+
+### Lecture 78 - Introduction to Middlewares
+
+* we used a middleware (redux-promise)
+* the flow of comm between react and redux in changing and using redux state: 
+	* React Component calls a Redux Action Creator
+	* Action Creator creates and Action obj
+	* Action obj is sent to Redux Middleware
+	* Middleware forwards action to Reducers
+	* Reduces produce new state
+	* State is seto to React Component
+
+### Lecture 79 - The purpose of Redux Promise
+
+* we know that : see Moder React and Redux course notes
+* we use `debugger;` hook to inspect inside the action creator and check action object
+* if we dont use redux-promise the action payload is a pending promise
+* we use middlewares to intercept actions before sent to reducer look into them and control when they will be sent
+
+### Lecture 80 - How Async Middleware Work
+
+* we can cascade (chain) middlewares in a middleware stack. they run in sequence before action reaches reducers
+* we will implelement our own custom Async Middleware that will
+	* check if action contains a promise in its payload
+	* if no it will send action to next middleware
+	* if yes it will wait till it resolves
+	* when it resolves it will extract the data  make a new action and send it again throught middleware pipeline but this time the paylopad will contain the data not the promise
+* this approach works regardless of middleware order
+
+### Lecture 81 - Crazy Middleware Syntax
+
+* we create a new dir in /src called /middlewares and add async.js for our custom middleware
+* we add boilerplate middleware code
+```
+export default function({dispatch}) {
+	return function(next) {
+		return function(action) {
+
+		}
+	}
+}
+```
+* we define functions returning each other (NESTING NASTY CODE). this is the signature of middleware code
+* each function gets called with a diferent param necessary for the middleware operation
+	* dispatch is the method called to send the action object to reducers. control the action flow
+	* next is the method called to pass control to the next middleware in pipline
+	* action is the action object from action creator
+* we will refactor the code using ES6 and arrow functions
+```
+export default ({dispatch}) => next => action =>  {
+
+}
+```
+
+### Lecture 82 - Forwarding Actions
+
+* we call next
+```
+	if(!action.payload || !action.payload.then) {
+		return next(action);
+	}
+```
+
+### Lecture 83 - Waiting for Promise Resolution
+
+* action goes into dispatch mechanism. a funnel that forwards action into middleware pipeline and reducers
+```
+export default ({dispatch}) => next => action => {
+	// check to see if the action has a promise as payload
+	// if it does wait for it to resolve
+	//if not call next
+	if(!action.payload || !action.payload.then) {
+		return next(action);
+	}
+
+	// we want to wait for the promise to resolve gets its data 
+	// and make a new action object and dispatch it
+	action.payload.then(function(response) {
+		const newAction = { ...action, payload: response};
+		dispatch(newAction);
+	});
+}
+```
+
+### Lecture 84 - Observing the Middleware
+
+* we wireapp our new middleware replacing redux-promise in Root `import async from './middlewares/async';`
+* we use debugger; in FETCH_COMMENTS cas ein reducer to llok inside logging action in console
+* we remove debugger statement and add it in middleware
+* to catch promise resolution we add a breaklpoint in our middleware callback in promise then
+
+### Lecture 85 - State Validation Middleware
+
+* our next middleware will be good for big projects
+* our current app state schema is
+	* comments Array<String>
+	* auth Boolean
+* in our app is unlikely to enter wrong type of data in a state piece. if we do so our app will brake or have unpredicted behaviour
+* Our Schema Middleware will:
+	* wait till it is the last middleware to run. it will send the actionb to the NEXT middleware
+	* if all is done it will get the new updated redux state.
+	* it will validate its structure and type of vals in state.
+	* if is valid do nothing
+	* if invalid log warning
+* this middleware will be for dev environe,mnts
+* it will run AFTER reeducers calculate new state
+
+### Lecture 86 - JSON Schema
+
+* how to validate state??? 
+* we will use JSON schema lib for validating JSON docs [JSON Schema](https://json-schema.org/)
+* we will format our state schema doc and use it in the lib
+
+### Lecture 87 - Generating JSON Schema
+
+* we install the lib `npm install --save tv4`
+* to build our schema we use [jsonschema tool](https://www.jsonschema.net/)
+* wenter a state sample in JSON format in the tool to get the schema
+```
+{
+  "comments": [
+    "Comment #1",
+    "Comment #2"
+  ],
+  "auth": true
+}
+```
+* infered schema
+```
+ 1 {
+ 2   "definitions": {},
+ 3   "$schema": "http://json-schema.org/draft-07/schema#",
+ 4   "$id": "http://example.com/root.json",
+ 5   "type": "object",
+ 6   "title": "The Root Schema",
+ 7   "required": [
+ 8     "comments",
+ 9     "auth"
+10   ],
+11   "properties": {
+12     "comments": {
+13       "$id": "#/properties/comments",
+14       "type": "array",
+15       "title": "The Comments Schema",
+16       "items": {
+17         "$id": "#/properties/comments/items",
+18         "type": "string",
+19         "title": "The Items Schema",
+20         "default": "",
+21         "examples": [
+22           "Comment #1",
+23           "Comment #2"
+24         ],
+25         "pattern": "^(.*)$"
+26       }
+27     },
+28     "auth": {
+29       "$id": "#/properties/auth",
+30       "type": "boolean",
+31       "title": "The Auth Schema",
+32       "default": false,
+33       "examples": [
+34         true
+35       ]
+36     }
+37   }
+38 }
+```
+
+### Lecture 88 - Middleware Creation
+
+* we add a new file in middlewares folder and add boilerplate code
+* first we do nothing so that ationhits reducers
+* we add inferred JSON schema to a new file stateSchema.js
+* we import tv4 lib and scehma
+* we use a seconf param of middleware object `export default ({dispatch, getState}) => next => action => {` get State contains the new State produced by reducers
+
+### Lecture 89 - Emmitting Warnings
+
 * 
