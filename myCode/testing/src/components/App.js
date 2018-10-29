@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import CommentBox from './CommentBox';
 import CommentList from './CommentList';
 import { Route, Link } from 'react-router-dom';
@@ -8,9 +8,9 @@ import * as actions from '../actions';
  class App extends Component {
 	renderButton() {
 		if(this.props.auth) {
-			return (<button onClick={this.props.changeAuth(false)}>Sign Out</button>);
+			return (<button onClick={() => this.props.changeAuth(false)}>Sign Out</button>);
 		} else {
-			return(<button onClick={this.props.changeAuth(true)}>Sign In</button>);
+			return(<button onClick={() => this.props.changeAuth(true)}>Sign In</button>);
 		}
 	}
 
