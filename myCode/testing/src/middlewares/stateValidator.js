@@ -5,5 +5,7 @@ export default ({dispatch, getState}) => next => action => {
 	// do nothing
 	next(action);
 
-	console.log(tv4.validate(getState(), stateSchema));
+	id(!tv4.validate(getState(), stateSchema)){
+		console.warn('Invalid state schema detected');
+	}
 }
