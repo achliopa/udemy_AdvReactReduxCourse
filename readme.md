@@ -923,7 +923,112 @@ export default ({dispatch}) => next => action => {
 * we add inferred JSON schema to a new file stateSchema.js
 * we import tv4 lib and scehma
 * we use a seconf param of middleware object `export default ({dispatch, getState}) => next => action => {` get State contains the new State produced by reducers
+* we consolo log the validation result `console.log(tv4.validate(getState(), stateSchema));`
 
 ### Lecture 89 - Emmitting Warnings
+
+* we import the middleware in Root
+* the order of middleware in applyMiddleware sets the order in the pipeline
+* we test it printing a browser warning in console `console.warn()`
+
+## Section 5 - Server Setup - Authentication
+
+### Lecture 90 - Introduction to Authentication
+
+* the authentication flow where authentication is handled in backend is
+	* client => server: username,password
+	* server: looks a username, password
+	* server => client: credentials are good, you are authenticated. here is an identifying piece of information include it in all future requests (token)
+	* client: can now make authenticated requests
+	* client=>server: i need protected info, here is my token 
+	* server=>client: i see your identifying piece of info tht authenticates you. here is the info
+
+### Lecture 91 - Cookies vs Tokens
+
+* Cookie:
+	* automatically included in all requests
+	* unique to each domain
+	* cannot be sent to different domains
+	* Request:
+	```
+	//headers
+	cookie: {}
+	//body
+	{
+		color: 'red'
+	}
+	```
+* Token
+	* have to manually  wire up
+	* can be sent to any domain
+	* Request:
+	```
+	//headers
+	authorization: fdaryrwyt742gwdyuwq
+	//body
+	{
+		color: 'red'
+	}
+	```
+* cookies give state to the HTTP protocol that is stateless
+* tokens a reusefull for distreibuted applications on different domains
+
+### Lecture 92 - Scalable Architecture
+
+* in our app when the user visits our homepage home-app.com the user gets index.html+bundle.js from the content server.
+* our-app.com point s to the content server. only serves index.html and bundle.js.
+* no auth is required
+* to get data from our api server auth is required.
+* API server is 100% separate. there might be several ones
+* we can spin multiple content servers in different geographic locations
+* maybe we have a mobile app that hits the api servers. so we expect much more load to the API servers. we might need a load balancer
+
+### Lecture 93 - Server Setup
+
+* we make a new project folder /auth and in it we put a /server folder for our API server
+* in server we run `npm init`
+* we install some dependencies `npm install --save express mongoose morgan body-parser`
+* we add an index.js root file
+
+### Lecture 94 - More Server Setup
+
+* API server is an express node server . node projects run on ES5 syntax. so we do oldschool js imports
+* code is standard express node server setup
+```
+const port = process.env.PORT || 3090;
+const server = http.createServer(app);
+server.listen(port);
+console.log('Server listening on:', port);
+```
+
+### Lecture 95 - Express Middleware
+
+```
+const app = express();
+
+// App setup
+app.use(morgan('combined'));
+app.use(bodyParser.json({ type: '*/*'}));
+```
+
+* our express app uses 2 moddlewares . body parser and morgan for logging requests
+* body parser is used to parse http body
+* we install nodemon to avoid restarting app after change `npm install --save nodemon`
+* we add a script in package.json "dev": "nodemon index.js"
+
+### Lecture 96 - Express Route Handler
+
+* we add a new file router.js to add express route handlers
+* we export a module es5 style
+* we import router in index.js and pass into to it the app `router(app);`
+* a typical es5 style express route handler looks like
+```
+	app.get('/', function(req,res,next){
+		res.send(['foo','bar']);
+	});
+```
+* next is used for error handling
+
+### Lecture 97 - Mongoose Models
 
 * 
