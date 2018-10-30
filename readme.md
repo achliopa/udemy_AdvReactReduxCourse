@@ -923,6 +923,7 @@ export default ({dispatch}) => next => action => {
 * we add inferred JSON schema to a new file stateSchema.js
 * we import tv4 lib and scehma
 * we use a seconf param of middleware object `export default ({dispatch, getState}) => next => action => {` get State contains the new State produced by reducers
+* we consolo log the validation result `console.log(tv4.validate(getState(), stateSchema));`
 
 ### Lecture 89 - Emmitting Warnings
 
@@ -1260,3 +1261,4 @@ const jwtOptions = {
 	* signin in => verify email/password => token
 	* auth'd req => verify token => resource access
 *  we need to encrypt the password to compare
+
