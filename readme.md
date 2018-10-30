@@ -926,4 +926,337 @@ export default ({dispatch}) => next => action => {
 
 ### Lecture 89 - Emmitting Warnings
 
-* 
+* we import the middleware in Root
+* the order of middleware in applyMiddleware sets the order in the pipeline
+* we test it printing a browser warning in console `console.warn()`
+
+## Section 5 - Server Setup - Authentication
+
+### Lecture 90 - Introduction to Authentication
+
+* the authentication flow where authentication is handled in backend is
+	* client => server: username,password
+	* server: looks a username, password
+	* server => client: credentials are good, you are authenticated. here is an identifying piece of information include it in all future requests (token)
+	* client: can now make authenticated requests
+	* client=>server: i need protected info, here is my token 
+	* server=>client: i see your identifying piece of info tht authenticates you. here is the info
+
+### Lecture 91 - Cookies vs Tokens
+
+* Cookie:
+	* automatically included in all requests
+	* unique to each domain
+	* cannot be sent to different domains
+	* Request:
+	```
+	//headers
+	cookie: {}
+	//body
+	{
+		color: 'red'
+	}
+	```
+* Token
+	* have to manually  wire up
+	* can be sent to any domain
+	* Request:
+	```
+	//headers
+	authorization: fdaryrwyt742gwdyuwq
+	//body
+	{
+		color: 'red'
+	}
+	```
+* cookies give state to the HTTP protocol that is stateless
+* tokens a reusefull for distreibuted applications on different domains
+
+### Lecture 92 - Scalable Architecture
+
+* in our app when the user visits our homepage home-app.com the user gets index.html+bundle.js from the content server.
+* our-app.com point s to the content server. only serves index.html and bundle.js.
+* no auth is required
+* to get data from our api server auth is required.
+* API server is 100% separate. there might be several ones
+* we can spin multiple content servers in different geographic locations
+* maybe we have a mobile app that hits the api servers. so we expect much more load to the API servers. we might need a load balancer
+
+### Lecture 93 - Server Setup
+
+* we make a new project folder /auth and in it we put a /server folder for our API server
+* in server we run `npm init`
+* we install some dependencies `npm install --save express mongoose morgan body-parser`
+* we add an index.js root file
+
+### Lecture 94 - More Server Setup
+
+* API server is an express node server . node projects run on ES5 syntax. so we do oldschool js imports
+* code is standard express node server setup
+```
+const port = process.env.PORT || 3090;
+const server = http.createServer(app);
+server.listen(port);
+console.log('Server listening on:', port);
+```
+
+### Lecture 95 - Express Middleware
+
+```
+const app = express();
+
+// App setup
+app.use(morgan('combined'));
+app.use(bodyParser.json({ type: '*/*'}));
+```
+
+* our express app uses 2 moddlewares . body parser and morgan for logging requests
+* body parser is used to parse http body
+* we install nodemon to avoid restarting app after change `npm install --save nodemon`
+* we add a script in package.json "dev": "nodemon index.js"
+
+### Lecture 96 - Express Route Handler
+
+* we add a new file router.js to add express route handlers
+* we export a module es5 style
+* we import router in index.js and pass into to it the app `router(app);`
+* a typical es5 style express route handler looks like
+```
+	app.get('/', function(req,res,next){
+		res.send(['foo','bar']);
+	});
+```
+* next is used for error handling
+
+### Lecture 97 - Mongoose Models
+
+*  in our app the libraryies we will use are
+	* low level request handling: HTTP module for handling HTTP requests
+	* routing, server logic: BosyParser to parse incoming HTTP requests, Morgan for logging, Express to parse response + routing
+	* Database: MongoDB to store data, Mongoose to work with MongoDB
+	* Authentication: Bcrypt-Nodejs to store a users password safely,Passport-JWT to authenticate users using a JWT, Passport Local to authenticate useing username/password, Passport JS to authenticate users
+* we will create a new user model and feed it to mongoose
+* we create a new folder /models and add a file called user.js for our model
+* we import mongoose ans mongoose.Schema
+* to create a model we need a schema a blueprint of our model
+```
+const userSchema = new Schema({
+	email: String,
+	password: String
+});
+```
+* we need to enfore uniqueness on our email. so instead of a string we pass an object ` {type: String, unique: true}`
+* mongodb is case insensitive. store email always lowercase `{type: String, unique: true, lowercase: true}`
+* we create our model from schema `const model = mongoose.model('user', userSchema);` user is the collection in MongoDB. model is a class
+* we export it
+
+### Lecture 98 - MongoDB Setup
+
+* we install mongoDB (linux)
+* we start it with mongod
+
+### Lecture 99 - Inspecting the Database
+
+* we need to configure mongoose mongodb connection
+* we require mongoose in our root file
+* we connect `mongoose.connect('mongodbL//localhost:auth/auth');
+* we use Robo3T for visualising mongoDB `
+
+### Lecture 100 - Authentication Controller
+
+* our incoming request goet throught the router. then it will go to 1 of 3 controllers depending on path. comments controller, auth controller, posts controller. each one returns a response (HTTP)
+* typically we have 1 controller per resource
+* we will implment the authentication controller in separate file. we add a folder /controllers and a file in it. authentication.js
+* the controller exports a route handler method. router imports it and send request there for handling depending on the path
+```
+const Authentication = require('./controllers/authentication');
+module.exports = function(app) {
+	app.post('/signup', Authentication.signup);
+}
+```
+* we test in postman
+
+### Lecture 101 - Searching for users
+
+* we fleshout the controller with the following
+	* see if a user with a given email exists
+	* if a user with eamil exists return an error
+	* if a user with email does niot exist , create and save user record 
+	* respond to request indicating user was created
+* we extract data from request. data come in http body as json. bodyParser middleware works and gives us js in boby e.g `const password = req.body.password;`
+* we import our user model class and use its class method findOne
+```
+	User.findOne({ email: email }, function(err,existingUser){
+		
+	});
+```
+
+### Lecture 102 - Creating User Accounts
+
+* our signup route controller  (heavy use of callbacks)
+```
+const User = require('../models/user');
+
+exports.signup = function(req,res,next) {
+	const email = req.body.email;
+	const password = req.body.password;
+	// see if a user with a given email exists
+	User.findOne({ email: email }, function(err,existingUser){
+		if(err){return next(err);}
+		// if a user with eamil exists return an error
+		if(existingUser){
+			return res.status(422).send({error: 'Email is in use'});
+		}
+		//if a user with email does niot exist , create and save user record 
+		const user = new User({
+			email: email,
+			password: password
+		});
+
+		user.save(function(err){
+			if (err) { return next(err);}
+
+			// respond to request indicating user was created
+			res.json(user);
+		});
+	});
+}
+```
+
+### Lecture 103 - Encrypting Passwords with Bcrypt
+
+* we add a fix to return early if request contains no data
+* passwords should not be stored unencrypted
+* we install bcrypt `npm install --save bcrypt-nodejs`
+* in our user model file we import it
+* we add a save hook to user schema intercepting the save to DB flow doing the encryption (first generate salt, then hash). code is a bit criptic with callback hell
+```
+// on save hook, encrypt password
+userSchema.pre('save', function(next) {
+	const user = this;
+
+	bcrypt.genSalt(10, function(err, salt) {
+		if(err){return next(err);}
+
+		bcrypt.hash(user.password, salt, null, function(err,hash) {
+			if (err){return next(err);}
+
+			user.password = hash;
+			next();
+		});
+	});
+});
+```
+
+### Lecture 104 - Salting a password
+
+* the context of this function is the user model (when it is called)
+* the flow that bcrypt uses then encrypting: salt+password= salt+hashed password
+* comparing a password at sign in (decrypt): salt+hashedpasswd (from db) => salt+submitted password (user) = hashed passwd => compare to db hashed ifequal all ok
+* what we store in DB is salt+hashedpassword
+
+### Lecture 105 - JWT Overview
+
+* how we compare password with hash later on (sign in)?
+* in our signup when all OK we respond with a dummy json. WTF? we need a token to treat them as loged in.
+* we need to produce this item. we ll use JWT. How it works???
+* At signup or sign in: User ID+our secret string = JSON Web Token (JWT)
+* When user hits the app with the JWT in his request: JWT + Our secret string = User Id. we know who he is
+* keep Secret string secret. NO github
+
+### Lecture 106 - Creating a JWT
+
+* we install a lib for jwt `npm install --save jwt-simple`
+* we add a config.js file in project root and add it to .gitignore (for secrets)
+* in our authentication controller we import config and jwt lib
+* we add a helpermethod withan argument (usermodel)
+* we create JWT with an item that identifies the entity  and does not change. id is ok for that
+```
+//pass in user model
+function tokenForUser(user) {
+	const timestamp = new Date().getTime();
+	return jwt.encode({sub: user.id, iat: timestamp}, config.secret);
+}
+```
+* sub is the subject of token
+* iat means issued at time
+* we return the token in our reply (generate and return)
+
+### Lecture 107 - Installing Passport
+
+* we need to give users ability to signin.
+* we need to find a way to check user is authenticated when hitting protected resources
+* before hitting resource controllers aafter router we need to check
+* we will use passport js `npm install passport passport-jwt`
+* we put all passport related code in passport.js in anew folder /services
+* we import passport ibs and user model
+```
+const passport = require('passport');
+const User = require('../models/user');
+const config = require('../config');
+const JWTStrategy = require('passport-jwt').Strategy;
+const ExtractJwt = require('passport-jwt').ExtractJwt;
+```
+
+### Lecture 108 - Passport Strategies
+
+* our request hits passport before going to route handler.
+* passport uses a strategy to authenticate. example strategiew: jwt user/passwo
+* we installled jwt strategy as passport-jwt
+* we define a config object to config the strategy
+* we create the strategy (instatiate the class) passing in params. the config object and a callback. 
+* the callback gets 2 arguments. payload=decoded token (user.id for our app + timestamp). done is a callback to use to say we are ok to authenticate user
+```
+//create JWT strategy
+const jwtLogin = new JwtStrategy(jwtOptions, function(payload, done) {
+	// see if user ID in payload existss in our DB
+	// if it does call done() with that 
+	// if not call done() without a user
+	User.findById(payload.sub, function(err,user){
+		if (err) {return done(err, false);}
+		if(user) {
+			done(null, user);
+		} else {
+			done(null, false);
+		}
+	});
+});
+```
+
+### Lecture 109 - Using Strategies with Passport
+
+* the stategy will be called when a request hits the server with a jwt in it
+* we set the options teeling passport where to look for the jwt in the http request and where to look for the secret key to decode the token
+```
+// setup options for JWT strategy
+const jwtOptions = {
+	jwtFromRequest: ExtractJwt.fromHeader('authorization'),
+	secretOrKey: config.secret
+};
+```
+* we also have to tell passport to use this strategy `passport.use(jwtLogin);`
+
+### Lecture 110 - Making an Authenticated Request
+
+* we need to wire passport to our request handling flow.
+* we import passport in router.js ans our service file
+* we create an express middleware to use `const requireAuth = passport.authenticate('jwt', { session: false });`
+* passport by default wants to create a cookie session. we disable that
+* we use it  asa middleware
+
+### Lecture 111 - Signin with Local Strategy
+
+* we implement the '/login' route
+* in signin we get a username and password not a token like in signup
+* we use a local pstrategy. we install the plugin `npminstall --save passport-local`
+* we import it `const LocalStrategy = require('passport-local');`
+* we create our strategy `const localLogin = new LocalStrategy({ usernameField: 'email'},function(email,password,done));`
+* we specify in config object that our user fiels will be email
+
+### Lecture 112 - Purpose of Local Strategy
+
+* we have 3 flows
+	* signing up => verufy email is not in use => token
+	* signin in => verify email/password => token
+	* auth'd req => verify token => resource access
+*  we need to encrypt the password to compare
