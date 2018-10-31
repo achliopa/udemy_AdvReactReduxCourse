@@ -14,6 +14,11 @@ const localLogin = new LocalStrategy({ usernameField: 'email'},function(email,pa
 		if (err) {return done(err, false);}
 		if(!user) {return done(null, false);} 
 		// compare passwords is password equal yto user.password
+		user.comparePassword(password, function(err,isMatch){
+			if(err) {return done(err);}
+			if(!isMatch){return done(null,false);}
+			return done(null,user);
+		});
 	});
 });
 
@@ -24,7 +29,7 @@ const jwtOptions = {
 };
 
 //create JWT strategy
-const jwtLogin = new JwtStrategy(jwtOptions, function(payload, done) {
+const jwtLogin = new JWTStrategy(jwtOptions, function(payload, done) {
 	// see if user ID in payload existss in our DB
 	// if it does call done() with that 
 	// if not call done() without a user
@@ -41,3 +46,4 @@ const jwtLogin = new JwtStrategy(jwtOptions, function(payload, done) {
 
 // tell passport to use this strategy
 passport.use(jwtLogin);
+passport.use(localLogin);

@@ -1262,3 +1262,51 @@ const jwtOptions = {
 	* auth'd req => verify token => resource access
 *  we need to encrypt the password to compare
 
+## Lecture 113 - Bcrypt Full Circle
+
+* we need to compare the submited unencrypted password with the stored hashed password
+* this is done using bcrypt encrypt method. we never decrypt passowrd
+* we need also the salt to prodyce the hashed password
+* salt is secret
+* we add a method to userchema class to compare passwords. this is will be available to all instances
+```
+userSchema.methods.comparePassword = function(candidatePassword, callback) {
+	bcrypt.compare(candidatePassword, this.password, function(err, isMatch){
+		if(err){return callback(err);}
+
+		callback(null,isMatch);
+	});
+}
+```
+
+### Lecture 114 - Protecting Signin Route
+
+* we use our newly created ethod in the local strategy to compare passwords
+```
+		user.comparePassword(password, function(err,isMatch){
+			if(err) {return done(err);}
+			if(!isMatch){return done(null,false);}
+			return done(null,user);
+		});
+```
+* we add a new route for signin in router. we add a new middleware to require username and password to attempt to authenticate use befoere hitting the route using user and password `const requireSignin = passport.authenticate('local', { session: false });`
+* we add a  new helper
+
+### Lecture 115 - Signing Users in
+
+* in our passport strategy we return done(null,user). we use it as middleware so passport passes user object into the req object of http to use in our route handler
+```
+exports.signin = function(req,res,next) {
+	// user has already had their email and password auth'd
+	// we need to give them a token\
+	res.send({token: tokenForUser(req.user)});
+}
+```
+* we test in postman
+* we use the token in postman as a header param "authorization" to get / route
+
+### Section 6 - Client Side Auth
+
+### Lecture 117 - Client Overview
+
+* 
