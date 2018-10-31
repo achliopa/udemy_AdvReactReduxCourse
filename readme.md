@@ -1309,4 +1309,115 @@ exports.signin = function(req,res,next) {
 
 ### Lecture 117 - Client Overview
 
+* in our auth folder (outside of server dir) we `create-react-app client`
+* this project will be the fronend of our auth backend api made with react tp flesh out sign in sign out and logout process
+* we ll have page accesible only when signed in
+* we cd in client and install dependencies `npm install --save react-router-dom redux react-redux redux-form axios redux-thunk`
+
+### Lecture 119 - -The App Component
+
+* our frontend runs on localhost:3000
+* we cleanup src folder
+* we add a source file index.js and add our imports (react and react-dom)
+* we add a new component at src/components/App.js as a functional comp. we render it in index.js `ReactDOM.render(<App/>,document.querySelector('#root'));`
+
+### Lecture 120 - Creating the Header
+
+* we build the Header comp (class based) and add it it to  App
+* Link should be wrapped in a BrowserRouter tag
+
+### Lecture 121 - Wiring Up React Router
+
+* we add BrowserRouter as wrapper
+* we add a simple Welcome component to render a main page message and add it to App
+* we can conditionaly render the main part of App component keeping header same by wrapping Route tags with App and passing the component in the arapper component(App) as props 'children'
+* in Index
+```
+ReactDOM.render(
+	<BrowserRouter>
+		<App>
+			<Route path='/' exact component={Welcome} />
+		</App>
+	</BrowserRouter>,
+	document.querySelector('#root'));
+```
+* in App
+```
+export default ({children}) => {
+	return(
+		<div>
+			<Header />
+			{children}
+		</div>
+	);
+}
+```
+
+### Lecture 122 - Scaffolding the Signup Form
+
+* we add a components sub folder /auth for auth related components
+* we add a Signup class componet for our signup form. we add it to index routes
+
+### Lecture 123 - Including Redux
+
+* we add a folder for reducers
+* in index.js we add the cobineReducers.
+* our state will heed one reducer for auth piece of state with 2 string params. authenticated and error
+* in authenticated we will pass the token as string
+* our auth reducer is 
+```
+const INITIAL_STATE = {
+	authenticated: '',
+	errorMessage: ''
+};
+
+export default function(state= INITIAL_STATE,action){
+	return state;
+}
+```
+* we wire redux to app
+* we import libs in insed.js 
+```
+import { Provider } from 'react-redux';
+import { createStore } from 'redux';
+```
+* we add store to app putting as root component `<Provider store={createStore(reducers, {})}>` wrapping our jsx.
+* we import our combined reducers `import reducers from './reducers';`
+
+### Lecture 124 - ReduxForm for Signup
+
+* we add redux-form reducer to reducers as form piece of state
+* we import {reduxForm, Field } into Signup component
+* we make our Sigup component a container wrapping it up with reduxForm and passing in a config object with the name of the form
+* we add Field tags passing in the param name the type and the type of component
+```
+					<Field
+						name="password"
+						type="password"
+						component="input"
+					/>
+```
+
+### Lecture 125 - Handling Form Submission
+
+* signup form will use a onSUbmit event handler to call an action creator 'signup' to hit the backend API
+* we add a  nadler . instead of event like react tevent handler it gets formProps from redux-form
+* we extract `const { handleSubmit } = this.props;` from reeduxForm props
+* the way to call it `<form onSubmit={handleSubmit(this.onSubmit)}>`
+* we add a button to submit in the form
+
+### Lecture 126 - Wiring Up middleware
+
+* we import redux-thunk in index.js and us e it as redux middleware
+* we use redux applyMiddleware method to pass thunk in createStoe method
+```
+const store = createStore(
+	reducers,
+	{},
+	applyMiddleware(reduxThunk)
+);
+```
+
+### Lecture 127 - Basics of Redux Thunk
+
 * 
