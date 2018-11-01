@@ -1420,4 +1420,173 @@ const store = createStore(
 
 ### Lecture 127 - Basics of Redux Thunk
 
-* 
+* we create a new /actions folder. we add types.js and index.js
+* in our action creator we have to return an action. action is sent to middleware and then to reducers. the action flow is facilitated from the 'dispatch' method
+* dispatch is funneled with dispatch
+* redux thunk allows us to return a function instead of action. the function must get passed the dispatch method
+* using the diuspath method we can fire as many actions as we want froma single creator calling `dispatch({type: action.type})`
+* in the method we can wait for a promise to resolve and then call dispatch
+```
+export const signup = ({email,password}) => {
+	return function(dispatch){
+		return (dispatch) => {			
+		};
+	};
+};
+```
+* or condensed `export const signup = ({email,password})=> dispatch => {};`
+
+### Lecture 128 - Calling the API
+
+* we import axios in action creator file
+* our creator becomes
+```
+export const signup = (formProps)=> dispatch => {
+	axios.post('http://localhost:3090/signup', formProps);
+};
+```
+* we wire it to signup form and wee need to apply connect wrapper (HOC)
+
+### Lecture 129 - Code CleanUp with Compose
+
+* to avopid wrappin hell with HOCs chaining we import compose helper from redux
+the syntax is 
+```
+export default compose(
+	connect(null, actions),
+	reduxForm({form: 'signup'})
+)(Signup);
+```
+* we call signup as a prop from our submit handler
+* we test and see an error
+
+### Lecture 130 - CORS in a Nutshell
+
+* this is a CORS error (cross origin resource sharing) and is a browser security measure
+* say we issue a money tranfer request from our app. url to a backend api
+* a CORS attack is when a malicious site (our users a tricked to visit it) and click a button that makes athe same request (transfering money to a rogue accoutn)
+* we want to prevent that using restrictions
+* say malicisous-site.com tries to send a request to my-bank.com
+* browser flags it as ricky and contacts the api if its ok to make a request from another domain
+* API say no . its only ok if request comes from my-bank.com
+* browser stops js script saying the server does not allow cors requests
+* so it is the API that may disable CORS protection
+
+### Lecture 131 - Solution in CORS errors
+
+* we ll change API configuration to solve it
+* we kill server and install cors package `npm install --save cors`
+* we go to /server/index.js import cors and use it `app.use(cors());` allowing all domain requests. optionaly we can pass a config obj limiting access to specific domains
+
+### Lecture 132 - Dispatching Actions
+
+* we need to dispatch an action from our action creator for signup usiong the token that gets returned in our app state for auth
+* we use async/await and dispatch the action after the promise resolves
+```
+export const signup = (formProps)=> async dispatch => {
+	const response = await axios.post('http://localhost:3090/signup', formProps);
+	dispatch({type: AUTH_USER, payload: response.data.token });
+};
+```
+* we add action to reducer geting the token
+
+### Lecture 133 - Displaying Auth Errors
+
+* when we do auth errors the response from api return explicit error messages
+* the flow is from action creator
+```
+	try {
+		const response = await axios.post('http://localhost:3090/signup', formProps);
+		dispatch({type: AUTH_USER, payload: response.data.token });
+	} catch(e) {
+		dispatch({type: AUTH_ERR, payload: 'Email in use' });
+	}
+```
+* we add it to reducers we map statte to props ion signup and render the prop error into our jsx
+
+### Lecture 134 - Redirect on Signup
+
+* after successfully sigin in we want to see the aeatures page.
+* we will do programmatic redirection using react-router
+* we add a callback to the action creator of signep to be called after the controler is succesful in geting an ok reply from backend
+```
+	onSubmit = (formProps) => {
+		this.props.signup(formProps, ()=>{
+			this.props.history.push('/feature');
+		});
+	}
+```
+* creator
+```
+export const signup = (formProps,callback)=> async dispatch => {
+	try {
+		const response = await axios.post('http://localhost:3090/signup', formProps);
+		dispatch({type: AUTH_USER, payload: response.data.token });
+		callback();
+	} catch(e) {
+		dispatch({type: AUTH_ERROR, payload: 'Email in use' });
+	}
+};
+```
+
+### Lecture 135 - Feature Component
+
+* we flesh out feature component as a placeholder dummy class based component and add it in index.js
+
+* we still can access Features even if not being logged in
+* we will implement a HOC to restrict access to Featues component
+* we have the code ready from a previous section
+* the only change is on state as auth is dependent on authenticated 
+* we wrap Features with the HIOC
+
+### Lecture 138 - Persisting Login State
+
+* after siginin in and accessing /feature is we refresh we get signed out
+* auth status is not persisted on page
+* we ll use browser local storage to store our token and check it when our app restarts
+* localsotage is easy to use `localstorage.setItem('key',<value>)` and `localStorage.getItem('key')`
+* in our action creator after dispatch we store token to local storage
+* when our app boots up  we fetch it from storage and store it to state as inisital state
+```
+const store = createStore(
+	reducers,
+	{
+		auth: { authenticated: localStorage.getIten('token')}
+	},
+	applyMiddleware(reduxThunk)
+);
+```
+
+### Lecture 139 - Signing Out a User
+
+* to logout we need to clear local storage data ans app state
+* we add a component and an actioncreator
+
+### Lecture 140 - Automatic Signout
+
+* we call the creator from a lifecycle method of Signout
+```
+	componentDidMount() {
+		this.props.signout();
+	}
+```
+
+### Lecture 141 - The Signin Component
+
+* we reuse most of signup (cp) and add it to routes
+
+### Lecture 142 - The Signin Action Creator
+
+* just cp of signup action creator
+
+### Lecture 143 - Updating the Header
+
+* styling with css and conditional rendering in HEaders.js
+* we add a render helper and use state (map state toprops ) to changge content depenting on auth status
+
+### Lecture 144 - Header Styling
+
+* we create a separate css file in the components folder
+* we import it in the Header.js `import './HeaderStyle.css';`
+* we add a classname to scope styling
+* localstorage is not a secure way to store token
