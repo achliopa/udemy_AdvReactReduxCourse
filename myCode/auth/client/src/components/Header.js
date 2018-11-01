@@ -5,7 +5,7 @@ import './HeaderStyle.css';
 
 class Header extends Component {
 	renderLinks() {
-		if (this.props.atuthenticated){
+		if (this.props.authenticated){
 			return(
 				<div>
 					<Link to="/signout">Sign Out</Link>

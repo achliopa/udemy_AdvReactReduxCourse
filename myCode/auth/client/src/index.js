@@ -11,12 +11,12 @@ import Welcome from './components/Welcome';
 import Signup from './components/auth/Signup';
 import Signin from './components/auth/Signin';
 import Signout from './components/auth/Signout';
-import Feature from './components/auth/Feature';
+import Feature from './components/Feature';
 
 const store = createStore(
 	reducers,
 	{
-		auth: { authenticated: localStorage.getIten('token')}
+		auth: { authenticated: localStorage.getItem('token')}
 	},
 	applyMiddleware(reduxThunk)
 );

@@ -1,10 +1,11 @@
-import Reac, { Component } from 'react';
+import React, { Component } from 'react';
+import requireAuth from './requireAuth';
 
 class Feature extends Component {
 	render() {
 		return (
 			<div>
-				This si the feature!
+				This is the SECRET feature!
 			</div>
 		);
 	}
